@@ -28,7 +28,7 @@ import { UUID } from "@lumino/coreutils";
 
 import { Token } from '@lumino/coreutils';
 
-interface INotebookState {
+export interface INotebookState {
   session_id: string;
   seq: number;
   notebook: INotebookContent;
@@ -223,7 +223,7 @@ const plugin: JupyterFrontEndPlugin<IETCJupyterLabNotebookStateProvider> = {
   autoStart: true,
   provides: IETCJupyterLabNotebookStateProvider,
   activate: (app: JupyterFrontEnd): IETCJupyterLabNotebookStateProvider => {
-    console.log('JupyterLab extension @educational-technology-collective/etc_jupyterlab_notebook_state is activated!');
+    console.log(`The JupyterLab plugin ${PLUGIN_ID} is activated!`);
 
     return new ETCJupyterLabNotebookStateProvider();
   }
