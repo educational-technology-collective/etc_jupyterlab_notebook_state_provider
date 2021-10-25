@@ -144,7 +144,7 @@ export class ETCJupyterLabNotebookState {
         throw new Error(`The cell at index ${index} is not tracked.`);
       }
 
-      if (cellState?.changed === false) {
+      if (cellState.changed === false) {
         //  The cell has not changed; hence, the notebook format cell will contain just its id.
 
         (nbFormatNotebook.cells[index] as any) = { id: this._notebook.widgets[index].model.id };
