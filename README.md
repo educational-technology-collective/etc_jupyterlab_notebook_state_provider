@@ -1,14 +1,41 @@
-# etc_jupyterlab_notebook_state_provider
+# ETC JupyterLab Notebook State Provider
 
-![Github Actions Status](https://github.com/educational-technology-collective/etc_jupyterlab_notebook_state_provider/workflows/Build/badge.svg)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/educational-technology-collective/etc_jupyterlab_notebook_state_provider/main?urlpath=lab)
-
-A JupyterLab extension.
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/educational-technology-collective/etc_jupyterlab_notebook_state_provider/main?urlpath=lab)
 
 
-This extension is composed of a Python package named `etc_jupyterlab_notebook_state_provider`
-for the server extension and a NPM package named `@educational-technology-collective/etc_jupyterlab_notebook_state_provider`
-for the frontend extension.
+The ETC JupyterLab Notebook State Provider produces sequential diffs of Notebooks.  Each call to `ETCJupyterLabNotebookStateProvider#getNotebookState` produces a representation of the Notebook where cells that are unchanged since the last call contain just their IDs.  Cells that have not changed since the last call contain their unaltered content.  The diffs can be used in order to reconstruct the Notebook at each point in the sequence.
 
+This strategy allows for the state of the Notebook to captured at many points while reducing the amount of storage and network resources needed in order to store the Notebooks.
+
+## Usage
+
+In the below minimal example, a NotbookPanel is registered with the `ETCJupyterLabNotebookStateProvider`.  The call to `getNotebookState` returns an object that contains a session ID, sequence number, and a serializable representation of the Notebook.  Each subsequent call to `getNotebookState` will return a representation of the Notebook where cells that are unchanged since the last call contain just their IDs.  Cells that have not changed since the last call contain their unaltered content.
+
+```js
+const plugin: JupyterFrontEndPlugin<void> = {
+  id: 'PLUGIN_ID',
+  autoStart: true,
+  requires: [
+    INotebookTracker,
+    IETCJupyterLabNotebookStateProvider
+  ],
+  activate: (
+    app: JupyterFrontEnd,
+    notebookTracker: INotebookTracker,
+    etcJupyterLabNotebookStateProvider: IETCJupyterLabNotebookStateProvider
+  ) => {
+
+    notebookTracker.widgetAdded.connect(async (sender: INotebookTracker, notebookPanel: NotebookPanel) => {
+
+      etcJupyterLabNotebookStateProvider.addNotebookPanel({ notebookPanel });
+
+      let notebookState = etcJupyterLabNotebookStateProvider.getNotebookState({ notebookPanel });
+
+      console.log(notebookState);
+    });
+  }
+};
+```
 
 ## Requirements
 
