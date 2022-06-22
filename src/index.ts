@@ -1,3 +1,5 @@
+import { requestAPI } from "./handler";
+
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
@@ -222,9 +224,12 @@ const plugin: JupyterFrontEndPlugin<IETCJupyterLabNotebookStateProvider> = {
   id: PLUGIN_ID,
   autoStart: true,
   provides: IETCJupyterLabNotebookStateProvider,
-  activate: (app: JupyterFrontEnd): IETCJupyterLabNotebookStateProvider => {
-    console.log(`The JupyterLab plugin ${PLUGIN_ID} is activated!`);
+  activate: async (app: JupyterFrontEnd): Promise<IETCJupyterLabNotebookStateProvider> => {
 
+    const VERSION = await requestAPI<string>("version")
+
+    console.log(`${PLUGIN_ID}, ${VERSION}`);    
+    
     return new ETCJupyterLabNotebookStateProvider();
   }
 };
