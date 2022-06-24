@@ -39,31 +39,38 @@ export interface INotebookState {
 export class ETCJupyterLabNotebookState {
 
   private _notebook: Notebook;
+  private _notebookPanel: NotebookPanel;
   private _cellState: WeakMap<Cell<ICellModel>, { changed: boolean, output: string }>;
   private _seq: number;
   private _session_id: string;
 
   constructor({ notebookPanel }: { notebookPanel: NotebookPanel }) {
 
+    this._notebookPanel = notebookPanel;
     this._notebook = notebookPanel.content;
     this._cellState = new WeakMap<Cell<ICellModel>, { changed: boolean, output: string }>();
     this._seq = 0;
     this._session_id = UUID.uuid4();
 
-    this.updateCellState();
-    //  The notebook loaded; hence, update the cell state.
+    (async () => {
 
-    this._notebook.model?.cells.changed.connect((
-      sender: IObservableUndoableList<ICellModel>,
-      args: IObservableList.IChangedArgs<ICellModel>
-    ) => {
+      await notebookPanel.revealed;
 
-      if (args.type == "add" || args.type == "set") {
+      this.updateCellState();
+      //  The notebook loaded; hence, update the cell state.
 
-        this.updateCellState();
-        //  A cell was added; hence, update the cell state.
-      }
-    }, this);
+      notebookPanel.content.model?.cells.changed.connect((
+        sender: IObservableUndoableList<ICellModel>,
+        args: IObservableList.IChangedArgs<ICellModel>
+      ) => {
+
+        if (args.type == "add" || args.type == "set") {
+
+          this.updateCellState();
+          //  A cell was added; hence, update the cell state.
+        }
+      }, this);
+    })();
   }
 
   private updateCellState() {
@@ -213,8 +220,8 @@ const PLUGIN_ID = "@educational-technology-collective/etc_jupyterlab_notebook_st
 export const IETCJupyterLabNotebookStateProvider = new Token<IETCJupyterLabNotebookStateProvider>(PLUGIN_ID);
 
 export interface IETCJupyterLabNotebookStateProvider {
-  getNotebookState({ notebookPanel }: { notebookPanel: NotebookPanel }) : INotebookState | undefined ;
-  addNotebookPanel({ notebookPanel }: { notebookPanel: NotebookPanel }) : void;
+  getNotebookState({ notebookPanel }: { notebookPanel: NotebookPanel }): INotebookState | undefined;
+  addNotebookPanel({ notebookPanel }: { notebookPanel: NotebookPanel }): void;
 }
 
 /**
@@ -228,8 +235,8 @@ const plugin: JupyterFrontEndPlugin<IETCJupyterLabNotebookStateProvider> = {
 
     const VERSION = await requestAPI<string>("version")
 
-    console.log(`${PLUGIN_ID}, ${VERSION}`);    
-    
+    console.log(`${PLUGIN_ID}, ${VERSION}`);
+
     return new ETCJupyterLabNotebookStateProvider();
   }
 };
