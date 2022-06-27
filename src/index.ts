@@ -1,4 +1,4 @@
-import { requestAPI } from "./handler";
+import { requestAPI } from './handler';
 
 import {
   JupyterFrontEnd,
@@ -8,27 +8,25 @@ import {
 import {
   NotebookPanel,
   Notebook
-} from "@jupyterlab/notebook";
+} from '@jupyterlab/notebook';
 
 import {
   Cell,
   CodeCell,
   ICellModel
-} from "@jupyterlab/cells";
+} from '@jupyterlab/cells';
 
 import {
   IObservableList,
   IObservableUndoableList,
   IObservableString
-} from "@jupyterlab/observables";
+} from '@jupyterlab/observables';
 
-import { IOutputAreaModel } from "@jupyterlab/outputarea";
+import { IOutputAreaModel } from '@jupyterlab/outputarea';
 
-import { INotebookContent } from "@jupyterlab/nbformat";
+import { INotebookContent } from '@jupyterlab/nbformat';
 
-import { UUID } from "@lumino/coreutils";
-
-import { Token } from '@lumino/coreutils';
+import { UUID, Token } from '@lumino/coreutils';
 
 export interface INotebookState {
   session_id: string;
@@ -38,6 +36,7 @@ export interface INotebookState {
 
 export class ETCJupyterLabNotebookState {
 
+  private _nbFormatNotebook: INotebookContent | null;
   private _notebook: Notebook;
   private _notebookPanel: NotebookPanel;
   private _cellState: WeakMap<Cell<ICellModel>, { changed: boolean, output: string }>;
@@ -48,6 +47,7 @@ export class ETCJupyterLabNotebookState {
 
     this._notebookPanel = notebookPanel;
     this._notebook = notebookPanel.content;
+    this._nbFormatNotebook = null;
     this._cellState = new WeakMap<Cell<ICellModel>, { changed: boolean, output: string }>();
     this._seq = 0;
     this._session_id = UUID.uuid4();
@@ -64,7 +64,7 @@ export class ETCJupyterLabNotebookState {
         args: IObservableList.IChangedArgs<ICellModel>
       ) => {
 
-        if (args.type == "add" || args.type == "set") {
+        if (args.type == 'add' || args.type == 'set') {
 
           this.updateCellState();
           //  A cell was added; hence, update the cell state.
@@ -92,12 +92,12 @@ export class ETCJupyterLabNotebookState {
             }
           });
 
-        if (cell.model.type == "code") {
+        if (cell.model.type == 'code') {
 
           (cell as CodeCell).model.outputs.changed.connect(
             (sender: IOutputAreaModel, args: IOutputAreaModel.ChangedArgs
             ) => {
-              if (args.type == "add") {
+              if (args.type == 'add') {
                 //  An output has been added to the cell; hence, compare the current state with the new state.
                 let state = this._cellState.get(cell);
                 if (state !== undefined) {
@@ -121,9 +121,9 @@ export class ETCJupyterLabNotebookState {
   private createCellOutput(cell: Cell<ICellModel>) {
     //  Combine the cell outputs into a string in order to check for changes.
 
-    let output = "";
+    let output = '';
 
-    if (cell.model.type == "code") {
+    if (cell.model.type == 'code') {
 
       let outputs = (cell as CodeCell).model.outputs;
 
@@ -136,12 +136,12 @@ export class ETCJupyterLabNotebookState {
       return output;
     }
 
-    return "";
+    return '';
   }
 
   getNotebookState(): { session_id: string, seq: number, notebook: INotebookContent } {
 
-    let nbFormatNotebook = (this._notebook.model?.toJSON() as INotebookContent);
+    this._nbFormatNotebook = (this._notebook.model?.toJSON() as INotebookContent) || this._nbFormatNotebook;
 
     for (let index = 0; index < this._notebook.widgets.length; index++) {
 
@@ -156,11 +156,16 @@ export class ETCJupyterLabNotebookState {
       if (cellState.changed === false) {
         //  The cell has not changed; hence, the notebook format cell will contain just its id.
 
-        (nbFormatNotebook.cells[index] as any) = { id: this._notebook.widgets[index].model.id };
+        (this._nbFormatNotebook.cells[index] as any) = { id: this._notebook.widgets[index].model.id };
       }
       else {
-        nbFormatNotebook.cells[index]['id'] = this._notebook.widgets[index].model.id;
+        this._nbFormatNotebook.cells[index]['id'] = this._notebook.widgets[index].model.id;
+        //  This just ensures that the id was copied over in the call to toJSON.
       }
+
+      //  Because it is possible for this to throw, as an extra precaution we don't
+      //  mark the cells as unchanged at this point; we do it in the following for loop
+      //  in order to ensure that it's *all or nothing* i.e., a transaction. 
     }
 
     for (let index = 0; index < this._notebook.widgets.length; index++) {
@@ -171,22 +176,22 @@ export class ETCJupyterLabNotebookState {
       }
       //  The cell state is going to be captured; hence, set the state to not changed.
 
-      //  We need to be certain that all the cells were processed prior to making any changes to their state;
-      //  hence, this operation is done in a loop separate from the loop above.
+      //  Because it's possible for the first for loop to throw, we need to be
+      //  certain that all the cells were processed prior to making any changes 
+      //  to their state; hence, this operation is done in this loop separate from 
+      //  the first loop above.
     }
 
     let state = {
       session_id: this._session_id,
       seq: this._seq,
-      notebook: nbFormatNotebook
+      notebook: this._nbFormatNotebook
     }
 
     this._seq = this._seq + 1;
-    //  We've made changes to the state at this point; 
-    //  hence, it's really important that nothing throws between now and recording the message.
-
-    //  We need all the messages in order to reconstruct the Notebook at each event;
-    //  hence, we need all the messages in order to reconstruct the Notebook at each event. :-)
+    //  We've made changes to the state at this point. *All* sequences must be logged in order to 
+    //  reconstruct a notebook; hence, it's really important that nothing throws between now and 
+    //  recording the message.
 
     return state;
   }
@@ -215,7 +220,7 @@ export class ETCJupyterLabNotebookStateProvider {
   }
 }
 
-const PLUGIN_ID = "@educational-technology-collective/etc_jupyterlab_notebook_state_provider:plugin";
+const PLUGIN_ID = '@educational-technology-collective/etc_jupyterlab_notebook_state_provider:plugin';
 
 export const IETCJupyterLabNotebookStateProvider = new Token<IETCJupyterLabNotebookStateProvider>(PLUGIN_ID);
 
@@ -233,7 +238,7 @@ const plugin: JupyterFrontEndPlugin<IETCJupyterLabNotebookStateProvider> = {
   provides: IETCJupyterLabNotebookStateProvider,
   activate: async (app: JupyterFrontEnd): Promise<IETCJupyterLabNotebookStateProvider> => {
 
-    const VERSION = await requestAPI<string>("version")
+    const VERSION = await requestAPI<string>('version')
 
     console.log(`${PLUGIN_ID}, ${VERSION}`);
 
