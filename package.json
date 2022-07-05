@@ -1,6 +1,6 @@
 {
   "name": "@educational-technology-collective/etc_jupyterlab_notebook_state_provider",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "A JupyterLab extension.",
   "keywords": [
     "jupyter",
