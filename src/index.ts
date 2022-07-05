@@ -238,11 +238,19 @@ const plugin: JupyterFrontEndPlugin<IETCJupyterLabNotebookStateProvider> = {
   provides: IETCJupyterLabNotebookStateProvider,
   activate: async (app: JupyterFrontEnd): Promise<IETCJupyterLabNotebookStateProvider> => {
 
-    const VERSION = await requestAPI<string>('version')
+    try{
+      const VERSION = await requestAPI<string>('version')
 
-    console.log(`${PLUGIN_ID}, ${VERSION}`);
-
-    return new ETCJupyterLabNotebookStateProvider();
+      console.log(`${PLUGIN_ID}, ${VERSION}`);
+  
+    }
+    catch(e) {
+      console.error(e);
+    }
+    finally{
+      
+      return new ETCJupyterLabNotebookStateProvider();
+    }
   }
 };
 
