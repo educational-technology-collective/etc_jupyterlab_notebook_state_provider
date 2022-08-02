@@ -64,17 +64,14 @@ export class ETCJupyterLabNotebookState {
         args: IObservableList.IChangedArgs<ICellModel>
       ) => {
 
-        if (args.type == 'add' || args.type == 'set') {
-
           this.updateCellState();
-          //  A cell was added; hence, update the cell state.
-        }
+          //  A cell event happened; hence, update the cell state.
       }, this);
     })();
   }
 
   private updateCellState() {
-
+    
     this._notebook.widgets.forEach((cell: Cell<ICellModel>) => {
 
       if (!this._cellState.has(cell)) {
@@ -97,6 +94,7 @@ export class ETCJupyterLabNotebookState {
           (cell as CodeCell).model.outputs.changed.connect(
             (sender: IOutputAreaModel, args: IOutputAreaModel.ChangedArgs
             ) => {
+
               if (args.type == 'add') {
                 //  An output has been added to the cell; hence, compare the current state with the new state.
                 let state = this._cellState.get(cell);
