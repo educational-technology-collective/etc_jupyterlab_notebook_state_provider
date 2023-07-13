@@ -7,7 +7,8 @@ import {
 
 import {
   NotebookPanel,
-  Notebook
+  Notebook,
+  CellList
 } from '@jupyterlab/notebook';
 
 import {
@@ -16,11 +17,7 @@ import {
   ICellModel
 } from '@jupyterlab/cells';
 
-import {
-  IObservableList,
-  IObservableUndoableList,
-  IObservableString
-} from '@jupyterlab/observables';
+import { IObservableList } from '@jupyterlab/observables';
 
 import { IOutputAreaModel } from '@jupyterlab/outputarea';
 
@@ -60,7 +57,7 @@ export class ETCJupyterLabNotebookState {
       //  The notebook loaded; hence, update the cell state.
 
       notebookPanel.content.model?.cells.changed.connect((
-        sender: IObservableUndoableList<ICellModel>,
+        sender: CellList,
         args: IObservableList.IChangedArgs<ICellModel>
       ) => {
 
@@ -80,8 +77,8 @@ export class ETCJupyterLabNotebookState {
         //  It's a new cell; hence, the changed state is set to true.
 
         ////  This is a new cell; hence, add handlers that check for changes in the inputs and outputs.
-        cell.inputArea.model.value.changed.connect(
-          (sender: IObservableString, args: IObservableString.IChangedArgs) => {
+        cell.inputArea?.model.mimeTypeChanged.connect(
+          () => {
             let state = this._cellState.get(cell);
             if (state !== undefined) {
               state.changed = true;
