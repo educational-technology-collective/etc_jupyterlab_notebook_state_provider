@@ -2,7 +2,7 @@ import tornado
 import json
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import ExtensionHandlerMixin
-from ._version import _fetchVersion
+from ._version import VERSION
 
 class RouteHandler(ExtensionHandlerMixin, JupyterHandler):
 
@@ -19,7 +19,7 @@ class RouteHandler(ExtensionHandlerMixin, JupyterHandler):
             self.set_header('Content-Type', 'application/json')
             
             if resource == 'version':
-                self.finish(json.dumps(_fetchVersion()))
+                self.finish(json.dumps(VERSION))
             elif resource == 'config':
                 self.finish(json.dumps(self.config))
             else:
